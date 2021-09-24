@@ -1,4 +1,5 @@
 import cv2
+from fastapi import responses
 import numpy as np
 import os
 from starlette.requests import Request
@@ -9,15 +10,17 @@ import shutil
 from fastapi import FastAPI, File, UploadFile
 from fastapi.params import Form
 from fastapi.templating import Jinja2Templates
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, HTMLResponse
+from fastapi.staticfiles import StaticFiles
 
 # Create an instance of FastAPI
 app = FastAPI()
 # Create template
 templates = Jinja2Templates(directory="templates")
+app.mount("/static", StaticFiles(directory="static"), name="static")
 
 
-@app.get("/")
+@app.get("/", response_class=HTMLResponse)
 async def root(request: Request):
     return templates.TemplateResponse("index.html", {"request": request})
 
@@ -30,8 +33,8 @@ async def UploadImage(file: UploadFile = File(...)):
                 shutil.copyfileobj(file.file, image)
             detection(f'{file.filename}')
             shutil.move(f'{file.filename}',
-                        f'{os.getcwd()}/static/{file.filename}')
-            return FileResponse(f'{os.getcwd()}/static/{file.filename}')
+                        f'{os.getcwd()}/data/{file.filename}')
+            return FileResponse(f'{os.getcwd()}/data/{file.filename}')
         else:
             return {'error': 'file is not image'}
     finally:
